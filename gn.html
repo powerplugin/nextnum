@@ -1,236 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-	<head>
-		<meta charset="UTF-8" />
-		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Document</title>
-		<style>
-			body {
-				font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
-					"Lucida Sans", Arial, sans-serif;
-			}
-			a {
-				font-size: 20px;
-			}
-			#results td {
-				font-size: 28px;
-				font-weight: bold;
-			}
-			#results span {
-				font-size: 16px;
-				color: gray;
-			}
-			table,
-			th,
-			td {
-				border: 1px solid;
-			}
-			table {
-				border-collapse: collapse;
-			}
-			table td {
-				padding: 15px;
-				font-size: 24px;
-			}
-			table td:nth-child(3n + 1) {
-				background: #ccc;
-			}
-			table td:nth-child(3n + 2) {
-				background: #aaa;
-			}
-			#tableWrapper {
-				max-height: 350px;
-				overflow-y: auto;
-				position: relative;
-				margin-bottom: 20px;
-				margin-top: 20px;
-			}
-
-			#inputWrapper {
-				display: none;
-			}
-		</style>
-	</head>
-	<body>
-		<a href="#" onclick="toggleInputVisibility()">Edit</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-		<a href="javascript:location.reload()">Refresh</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
-		<a href="javascript:localStorage.removeItem('smkList')">Reset</a>
-		<div id="inputWrapper">
-			<div id="tableWrapper">
-				<table id="chart"></table>
-			</div>
-			<form onsubmit="event.preventDefault(); handleSubmit(event);">
-				<input type="text" name="entry" id="entry" />
-				<input type="submit" value="Add" />
-			</form>
-		</div>
-		<br /><br />
-		<h3>Results for (<span id="lastnum"></span>)</h3>
-		<table id="results"></table>
-
-		<script>
-			function setSchema() {
-				var dummyData = [
-					44,
-					40,
-					45,
-					40,
-					83,
-					13,
-					94,
-					43,
-					42,
-					23,
-					12,
-					14,
-					30,
-					06,
-					35,
-					52,
-					01,
-					11,
-					07,
-					"$$",
-					84,
-					91,
-					57,
-					81,
-					30,
-					58,
-					93,
-					72,
-					60,
-					59,
-					06,
-					56,
-					11,
-					13,
-					09,
-					20,
-					88,
-					58,
-					77,
-					23,
-					13,
-					40,
-					26,
-					73,
-					16,
-					48,
-					59,
-					37,
-					38,
-					82,
-					87,
-					43,
-					49,
-					67,
-					47,
-					62,
-					05,
-					75,
-					15,
-					48,
-				];
-				var lg = JSON.parse(localStorage.getItem("smkList"));
-				if (!lg || lg?.length < 1) {
-					localStorage.setItem("smkList", JSON.stringify(dummyData));
-				}
-			}
-            setSchema();
-			function renderLastNumber() {
-				var data = JSON.parse(localStorage.getItem("smkList"));
-				var num = "" + data.slice(-1)[0];
-				document.querySelector("#lastnum").innerHTML = num;
-			}
-			function renderTable() {
-				var dummy = ["", "", "", ""];
-				var data = [...dummy, ...JSON.parse(localStorage.getItem("smkList"))];
-				var el = document.querySelector("table#chart");
-				el.innerHTML = "";
-				var count = 5;
-				var childs = [];
-				var htmlContent = "";
-				data.forEach((item, index) => {
-					var number = ("" + item).length == 1 ? "0" + item : item;
-					childs.push("<td>" + number + "</td>");
-					count--;
-					var isLastCell = data.length === index + 1 && (index + 1) % 5 !== 0;
-					if (count == 0 || isLastCell) {
-						htmlContent += "<tr>" + childs.join("") + "</tr>";
-						childs = [];
-						count = 5;
-					}
-				});
-				el.innerHTML = htmlContent;
-				setTimeout(() => {
-					document.querySelector("#tableWrapper").scrollTo(0, 2300);
-				}, 300);
-			}
-			function toggleInputVisibility() {
-				var el = document.getElementById("inputWrapper");
-				el.style.display = el.style.display !== "block" ? "block" : "none";
-
-				if (el.style.display === "block") {
-					renderTable();
-				}
-			}
-			function addItem(num) {
-				var data = JSON.parse(localStorage.getItem("smkList")) || [];
-				data.push(num?.trim());
-				localStorage.setItem("smkList", JSON.stringify(data));
-				renderTable();
-				renderDetails();
-				document.querySelector("input#entry").value = "";
-			}
-			function handleSubmit(e) {
-				e.preventDefault();
-				addItem(document.querySelector("input#entry").value);
-				return false;
-			}
-			function resultsToArray(results) {
-				var arr = [];
-				Object.keys(results).forEach((key) => {
-					arr.push({ num: key, occ: results[key] });
-				});
-				return arr.sort((a, b) => a.occ - b.occ).reverse();
-			}
-			function getData() {
-				var data = JSON.parse(localStorage.getItem("smkList"));
-				var lastNumber = "" + data.slice(-1)[0];
-				// console.log(lastNumber);
-				var lastDayOp = lastNumber.length == 2 ? lastNumber.charAt(0) : "0";
-				var results = {};
-				for (var i = 0; i < data.length - 1; i++) {
-					var item = "" + data[i];
-					var itemOp = item.length == 2 ? item.charAt(0) : "0";
-					if (itemOp == lastDayOp) {
-						var itemNextDay = "" + data[i + 1];
-						var itemNextDayOp =
-							itemNextDay.length == 2 ? itemNextDay.charAt(0) : "0";
-						// console.log(item, itemNextDay);
-						results[itemNextDayOp] = (results[itemNextDayOp] || 0) + 1;
-					}
-				}
-
-				return resultsToArray(results);
-			}
-
-			function renderResults() {
-				var results = getData();
-				var renderContent = results.map(
-					(el) => "<td>" + el.num + `<span>(${el.occ})</span></td>`
-				);
-				document.querySelector("#results").innerHTML =
-					"<tr>" + renderContent.join("") + "</tr>";
-			}
-
-			function renderDetails() {
-				renderResults();
-				renderLastNumber();
-			}
-
-			renderDetails();
-		</script>
-	</body>
+<!doctype html>
+<html lang=en>
+<head>
+<meta charset=UTF-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Document</title>
+<style>body{font-family:"Trebuchet MS","Lucida Sans Unicode","Lucida Grande","Lucida Sans",Arial,sans-serif}a{font-size:20px}#results td{font-size:28px;font-weight:700}#results span{font-size:16px;color:gray}table,td,th{border:1px solid}table{border-collapse:collapse}table td{padding:15px;font-size:24px}table td:nth-child(3n+1){background:#ccc}table td:nth-child(3n+2){background:#aaa}#tableWrapper{max-height:350px;overflow-y:auto;position:relative;margin-bottom:20px;margin-top:20px}#inputWrapper{display:none}</style>
+</head>
+<body>
+<a href=# onclick=toggleInputVisibility()>Edit</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+<a href=javascript:location.reload()>Refresh</a>&nbsp;&nbsp;&nbsp; | &nbsp;&nbsp;&nbsp;
+<a href="javascript:localStorage.removeItem('smkList')">Reset</a>
+<div id=inputWrapper>
+<div id=tableWrapper>
+<table id=chart></table>
+</div>
+<form onsubmit=event.preventDefault(),handleSubmit(event)>
+<input name=entry id=entry>
+<input type=submit value=Add>
+</form>
+</div>
+<br><br>
+<h3>Results for (<span id=lastnum></span>)</h3>
+<table id=results></table>
+<script>function setSchema(){var e=JSON.parse(localStorage.getItem("smkList"));(!e||e?.length<1)&&localStorage.setItem("smkList",JSON.stringify([44,40,45,40,83,13,94,43,42,23,12,14,30,6,35,52,1,11,7,"$$",84,91,57,81,30,58,93,72,60,59,6,56,11,13,9,20,88,58,77,23,13,40,26,73,16,48,59,37,38,82,87,43,49,67,47,62,5,75,15,48]))}function renderLastNumber(){var e=""+JSON.parse(localStorage.getItem("smkList")).slice(-1)[0];document.querySelector("#lastnum").innerHTML=e}function renderTable(){var e=["","","","",...JSON.parse(localStorage.getItem("smkList"))],t=document.querySelector("table#chart");t.innerHTML="";var r=5,n=[],a="";e.forEach(((t,l)=>{var s=1==(""+t).length?"0"+t:t;n.push("<td>"+s+"</td>"),r--;var o=e.length===l+1&&(l+1)%5!=0;(0==r||o)&&(a+="<tr>"+n.join("")+"</tr>",n=[],r=5)})),t.innerHTML=a,setTimeout((()=>{document.querySelector("#tableWrapper").scrollTo(0,2300)}),300)}function toggleInputVisibility(){var e=document.getElementById("inputWrapper");e.style.display="block"!==e.style.display?"block":"none","block"===e.style.display&&renderTable()}function addItem(e){var t=JSON.parse(localStorage.getItem("smkList"))||[];t.push(e?.trim()),localStorage.setItem("smkList",JSON.stringify(t)),renderTable(),renderDetails(),document.querySelector("input#entry").value=""}function handleSubmit(e){return e.preventDefault(),addItem(document.querySelector("input#entry").value),!1}function resultsToArray(e){var t=[];return Object.keys(e).forEach((r=>{t.push({num:r,occ:e[r]})})),t.sort(((e,t)=>e.occ-t.occ)).reverse()}function getData(){for(var e=JSON.parse(localStorage.getItem("smkList")),t=""+e.slice(-1)[0],r=2==t.length?t.charAt(0):"0",n={},a=0;a<e.length-1;a++){var l=""+e[a];if((2==l.length?l.charAt(0):"0")==r){var s=""+e[a+1],o=2==s.length?s.charAt(0):"0";n[o]=(n[o]||0)+1}}return resultsToArray(n)}function renderResults(){var e=getData().map((e=>"<td>"+e.num+`<span>(${e.occ})</span></td>`));document.querySelector("#results").innerHTML="<tr>"+e.join("")+"</tr>"}function renderDetails(){renderResults(),renderLastNumber()}setSchema(),renderDetails()</script>
+</body>
 </html>
