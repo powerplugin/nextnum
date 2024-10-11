@@ -68,6 +68,75 @@
 		<table id="results"></table>
 
 		<script>
+			function setSchema() {
+				var dummyData = [
+					44,
+					40,
+					45,
+					40,
+					83,
+					13,
+					94,
+					43,
+					42,
+					23,
+					12,
+					14,
+					30,
+					06,
+					35,
+					52,
+					01,
+					11,
+					07,
+					"$$",
+					84,
+					91,
+					57,
+					81,
+					30,
+					58,
+					93,
+					72,
+					60,
+					59,
+					06,
+					56,
+					11,
+					13,
+					09,
+					20,
+					88,
+					58,
+					77,
+					23,
+					13,
+					40,
+					26,
+					73,
+					16,
+					48,
+					59,
+					37,
+					38,
+					82,
+					87,
+					43,
+					49,
+					67,
+					47,
+					62,
+					05,
+					75,
+					15,
+					48,
+				];
+				var lg = JSON.parse(localStorage.getItem("smkList"));
+				if (!lg || lg?.length < 1) {
+					localStorage.setItem("smkList", JSON.stringify(dummyData));
+				}
+			}
+            setSchema();
 			function renderLastNumber() {
 				var data = JSON.parse(localStorage.getItem("smkList"));
 				var num = "" + data.slice(-1)[0];
