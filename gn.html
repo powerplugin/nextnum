@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+		<style>
+			body {
+				font-family: "Trebuchet MS", "Lucida Sans Unicode", "Lucida Grande",
+					"Lucida Sans", Arial, sans-serif;
+			}
+			a {
+				font-size: 20px;
+			}
+			#results td {
+				font-size: 28px;
+				font-weight: bold;
+			}
+			#results span {
+				font-size: 16px;
+				color: gray;
+			}
+			table,
+			th,
+			td {
+				border: 1px solid;
+			}
+			table {
+				border-collapse: collapse;
+			}
+			table td {
+				padding: 15px;
+				font-size: 24px;
+			}
+			table td:nth-child(3n + 1) {
+				background: #ccc;
+			}
+			table td:nth-child(3n + 2) {
+				background: #aaa;
+			}
+			#tableWrapper {
+				max-height: 350px;
+				overflow-y: auto;
+				position: relative;
+				margin-bottom: 20px;
+				margin-top: 20px;
+			}
+
+			#inputWrapper {
+				display: none;
+			}
+		</style>
+	</head>
+	<body>
+		<a href="#" onclick="toggleInputVisibility()">Edit</a> |
+		<a href="javascript:location.reload()">Refresh</a>
+		<div id="inputWrapper">
+			<div id="tableWrapper">
+				<table id="chart"></table>
+			</div>
+			<form onsubmit="event.preventDefault(); handleSubmit(event);">
+				<input type="text" name="entry" id="entry" />
+				<input type="submit" value="Add" />
+			</form>
+		</div>
+		<br /><br />
+		<h3>Results for (<span id="lastnum"></span>)</h3>
+		<table id="results"></table>
+
+		<script>
+			function renderLastNumber() {
+				var data = JSON.parse(localStorage.getItem("smkList"));
+				var num = "" + data.slice(-1)[0];
+				document.querySelector("#lastnum").innerHTML = num;
+			}
+			function renderTable() {
+				var dummy = ["", "", "", ""];
+				var data = [...dummy, ...JSON.parse(localStorage.getItem("smkList"))];
+				var el = document.querySelector("table#chart");
+				el.innerHTML = "";
+				var count = 5;
+				var childs = [];
+				var htmlContent = "";
+				data.forEach((item, index) => {
+					var number = ("" + item).length == 1 ? "0" + item : item;
+					childs.push("<td>" + number + "</td>");
+					count--;
+					var isLastCell = data.length === index + 1 && (index + 1) % 5 !== 0;
+					if (count == 0 || isLastCell) {
+						htmlContent += "<tr>" + childs.join("") + "</tr>";
+						childs = [];
+						count = 5;
+					}
+				});
+				el.innerHTML = htmlContent;
+			}
+			function toggleInputVisibility() {
+				var el = document.getElementById("inputWrapper");
+				el.style.display = el.style.display !== "block" ? "block" : "none";
+
+				if (el.style.display === "block") {
+					renderTable();
+				}
+			}
+			function addItem(num) {
+				var data = JSON.parse(localStorage.getItem("smkList")) || [];
+				data.push(num?.trim());
+				localStorage.setItem("smkList", JSON.stringify(data));
+				renderTable();
+				renderDetails();
+				document.querySelector("input#entry").value = "";
+			}
+			function handleSubmit(e) {
+				e.preventDefault();
+				addItem(document.querySelector("input#entry").value);
+				return false;
+			}
+			function resultsToArray(results) {
+				var arr = [];
+				Object.keys(results).forEach((key) => {
+					arr.push({ num: key, occ: results[key] });
+				});
+				return arr.sort((a, b) => a.occ - b.occ).reverse();
+			}
+			function getData() {
+				var data = JSON.parse(localStorage.getItem("smkList"));
+				var lastNumber = "" + data.slice(-1)[0];
+				// console.log(lastNumber);
+				var lastDayOp = lastNumber.length == 2 ? lastNumber.charAt(0) : "0";
+				var results = {};
+				for (var i = 0; i < data.length - 1; i++) {
+					var item = "" + data[i];
+					var itemOp = item.length == 2 ? item.charAt(0) : "0";
+					if (itemOp == lastDayOp) {
+						var itemNextDay = "" + data[i + 1];
+						var itemNextDayOp =
+							itemNextDay.length == 2 ? itemNextDay.charAt(0) : "0";
+						// console.log(item, itemNextDay);
+						results[itemNextDayOp] = (results[itemNextDayOp] || 0) + 1;
+					}
+				}
+
+				return resultsToArray(results);
+			}
+
+			function renderResults() {
+				var results = getData();
+				var renderContent = results.map(
+					(el) => "<td>" + el.num + `<span>(${el.occ})</span></td>`
+				);
+				document.querySelector("#results").innerHTML =
+					"<tr>" + renderContent.join("") + "</tr>";
+			}
+
+			function renderDetails() {
+				renderResults();
+				renderLastNumber();
+			}
+
+			renderDetails();
+		</script>
+	</body>
+</html>
