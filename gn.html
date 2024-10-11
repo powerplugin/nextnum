@@ -163,6 +163,9 @@
 					}
 				});
 				el.innerHTML = htmlContent;
+				setTimeout(() => {
+					document.querySelector("#tableWrapper").scrollTo(0, 2300);
+				}, 300);
 			}
 			function toggleInputVisibility() {
 				var el = document.getElementById("inputWrapper");
